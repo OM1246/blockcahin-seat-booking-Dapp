@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Blockchain Seat Booking dApp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+<style>
+body {
+    background: linear-gradient(135deg, #232526 0%, #414345 100%);
+    font-family: 'Montserrat', sans-serif;
+    color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+.container {
+    max-width: 980px;
+    margin: 40px auto;
+    background: rgba(30,30,40,0.97);
+    border-radius: 22px;
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.37);
+    padding: 40px 36px 36px 36px;
+    position: relative;
+    overflow: hidden;
+}
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    border-bottom: 1.5px solid #00c6ff33;
+    padding-bottom: 18px;
+}
+h2 {
+    font-size: 2.7rem;
+    letter-spacing: 1.5px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #00c6ff;
+    font-weight: 700;
+}
+#walletStatus {
+    margin: 0 0 0 12px;
+    color: #90ee90;
+    font-size: 1.1rem;
+    background: rgba(0,198,255,0.12);
+    padding: 7px 18px;
+    border-radius: 8px;
+    display: inline-block;
+    border: 1.5px solid #00c6ff44;
+}
+.wallet-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+button {
+    background: linear-gradient(90deg,#00c6ff 0%,#0072ff 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 13px 32px;
+    color: #fff;
+    font-size: 1.08rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 0;
+    transition: .2s;
+    box-shadow: 0 2px 8px rgba(0,198,255,0.12);
+    outline: none;
+    letter-spacing: .5px;
+    position: relative;
+}
+button:active {
+    transform: scale(0.98);
+}
+button:hover {
+    background: linear-gradient(90deg,#0072ff 0%,#00c6ff 100%);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 4px 16px #00c6ff33;
+}
+#seats {
+    display: grid;
+    grid-template-columns: repeat(6, 70px);
+    gap: 22px 28px;
+    justify-content: center;
+    margin: 38px auto 22px auto;
+    background: rgba(255,255,255,0.05);
+    border-radius: 18px;
+    padding: 36px 0;
+    box-shadow: 0 2px 16px rgba(0,198,255,0.09);
+    position: relative;
+}
+.seat {
+    background: linear-gradient(135deg,#232526 0%,#414345 100%);
+    border: 2.5px solid #00c6ff;
+    border-radius: 16px;
+    padding: 22px 0 10px 0;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.18rem;
+    color: #fff;
+    transition: .18s;
+    box-shadow: 0 2px 8px rgba(0,198,255,0.08);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    min-height: 70px;
+    user-select: none;
+    outline: none;
+}
+.seat i {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+    color: #00c6ff;
+    transition: color .2s;
+}
+.seat:hover:not(.booked):not(.selected) {
+    background: linear-gradient(135deg,#00c6ff 0%,#90ee90 100%);
+    color: #232526;
+    border-color: #90ee90;
+    transform: scale(1.09);
+}
+.seat:hover:not(.booked):not(.selected) i {
+    color: #232526;
+}
+.booked {
+    background: linear-gradient(135deg,#ff4b2b 0%,#ff416c 100%)!important;
+    cursor: not-allowed;
+    color: white;
+    opacity: .7;
+    border-color: #ff4b2b;
+    position: relative;
+}
+.booked i {
+    color: #fff;
+}
+.booked::after {
+    content: "\f023";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 1.2rem;
+    color: #fff;
+    opacity: .8;
+}
+.seat.selected {
+    background: linear-gradient(135deg,#90ee90 0%,#00c6ff 100%)!important;
+    color: #232526;
+    border-color: #90ee90;
+    box-shadow: 0 0 0 5px #90ee9033;
+    z-index: 2;
+}
+.seat.selected i {
+    color: #232526;
+}
+#ticketCard {
+    display: none;
+    margin: 32px auto 0 auto;
+    padding: 28px 36px 20px 36px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.13);
+    max-width: 440px;
+    box-shadow: 0 2px 16px rgba(0,198,255,0.09);
+    text-align: center;
+    position: relative;
+    border: 2px solid #00c6ff;
+    animation: fadeIn .7s;
+}
+#ticketCard h3 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    color: #00c6ff;
+    letter-spacing: 1px;
+}
+canvas {
+    margin-top: 12px;
+    background: white;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,198,255,0.08);
+}
+#msg {
+    margin-top: 16px;
+    color: #90ee90;
+    font-size: 1.13rem;
+    font-weight: 600;
+}
+#history {
+    max-width: 740px;
+    margin: 44px auto 0 auto;
+    background: rgba(255,255,255,0.10);
+    border-radius: 16px;
+    padding: 28px 32px 20px 32px;
+    box-shadow: 0 2px 12px rgba(0,198,255,0.07);
+    text-align: left;
+}
+#history h3 {
+    margin-top: 0;
+    color: #00c6ff;
+    font-size: 1.28rem;
+    letter-spacing: 1px;
+}
+.txn {
+    margin-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.13);
+    padding-bottom: 12px;
+    font-size: 1.07rem;
+    line-height: 1.7;
+    word-break: break-all;
+    background: rgba(0,198,255,0.04);
+    border-radius: 7px;
+    padding-left: 10px;
+}
+.txn:last-child {
+    border-bottom: none;
+}
+.txn a {
+    color: #90ee90;
+    text-decoration: underline;
+    word-break: break-all;
+}
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-top: 12px;
+    margin-bottom: 0;
+    font-size: 1.05rem;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.legend-box {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    display: inline-block;
+    margin-right: 4px;
+    border: 2px solid #00c6ff;
+}
+.legend-available {
+    background: linear-gradient(135deg,#232526 0%,#414345 100%);
+}
+.legend-booked {
+    background: linear-gradient(135deg,#ff4b2b 0%,#ff416c 100%);
+}
+.legend-selected {
+    background: linear-gradient(135deg,#90ee90 0%,#00c6ff 100%);
+}
+::-webkit-scrollbar {
+    width: 10px;
+    background: #232526;
+}
+::-webkit-scrollbar-thumb {
+    background: #00c6ff55;
+    border-radius: 6px;
+}
+@media (max-width:900px) {
+    .container { padding: 18px 2vw 18px 2vw; }
+    #seats { grid-template-columns: repeat(5, 54px); gap: 14px 10px; padding: 18px 0; }
+    .seat { min-width: 54px; min-height: 54px; font-size: 1rem; }
+    #ticketCard { padding: 16px 4vw 12px 4vw; }
+    #history { padding: 12px 4vw 10px 4vw; }
+}
+@media (max-width:600px) {
+    .container { padding: 8px 0 8px 0; }
+    header { flex-direction: column; gap: 12px; }
+    h2 { font-size: 1.5rem; }
+    #seats { grid-template-columns: repeat(3, 38px); gap: 8px 6px; padding: 10px 0; }
+    .seat { min-width: 38px; min-height: 38px; font-size: .9rem; }
+    #ticketCard { padding: 8px 2vw 8px 2vw; }
+    #history { padding: 8px 2vw 8px 2vw; }
+    .legend { gap: 10px; font-size: .95rem; }
+    .legend-box { width: 16px; height: 16px; }
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(30px);}
+    to { opacity: 1; transform: translateY(0);}
+}
+.glow {
+    box-shadow: 0 0 16px 4px #00c6ff55, 0 0 4px #90ee9055;
+    animation: glowPulse 1.5s infinite alternate;
+}
+@keyframes glowPulse {
+    from { box-shadow: 0 0 16px 4px #00c6ff55, 0 0 4px #90ee9055; }
+    to { box-shadow: 0 0 32px 8px #00c6ff99, 0 0 12px #90ee9099; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+    <h2><i class="fa-solid fa-ticket"></i> Blockchain Seat Booking</h2>
+    <div class="wallet-actions">
+        <div id="walletStatus"><i class="fa-solid fa-plug"></i> Wallet not connected</div>
+        <button onclick="connect()" class="glow"><i class="fa-solid fa-link"></i> Connect Wallet</button>
+    </div>
+</header>
+<div class="legend">
+    <div class="legend-item"><span class="legend-box legend-available"></span>Available</div>
+    <div class="legend-item"><span class="legend-box legend-booked"></span>Booked</div>
+    <div class="legend-item"><span class="legend-box legend-selected"></span>Selected</div>
+</div>
+<div id="seats"></div>
+<div id="ticketCard">
+    <h3><i class="fa-solid fa-ticket"></i> Your Ticket</h3>
+    <canvas id="qrcode"></canvas>
+    <p id="msg"></p>
+</div>
+<div id="history">
+    <h3><i class="fa-solid fa-clock-rotate-left"></i> Transaction History</h3>
+    <div id="txnList">No transactions yet.</div>
+</div>
+</div>
+<script>
+const contractAddress="0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const contractABI=[{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"seat","type":"uint256"},{"indexed":true,"internalType":"address","name":"user","type":"address"}],"name":"SeatBooked","type":"event"},{"inputs":[{"internalType":"uint256","name":"seat","type":"uint256"}],"name":"bookSeat","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"uint256","name":"seat","type":"uint256"}],"name":"getSeatOwner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"price","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"seatOwners","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}];
+let web3,contract,account,selectedSeat=null;let transactions=[];
+function shortenAddress(a){return a.slice(0,6)+"..."+a.slice(-4);}
+async function connect(){
+    if(window.ethereum){
+        web3=new Web3(window.ethereum);
+        await window.ethereum.request({method:"eth_requestAccounts"});
+        const a=await web3.eth.getAccounts();
+        account=a[0];
+        contract=new web3.eth.Contract(contractABI,contractAddress);
+        document.getElementById("walletStatus").innerHTML=`<i class="fa-solid fa-circle-check"></i> Connected: <b>${shortenAddress(account)}</b>`;
+        document.querySelector("button.glow").classList.remove("glow");
+        loadSeats();
+    }else{
+        alert("Please install MetaMask.");
+    }
+}
+async function loadSeats(){
+    const d=document.getElementById("seats");
+    d.innerHTML="";
+    for(let i=1;i<=30;i++){
+        const o=await contract.methods.getSeatOwner(i).call();
+        const s=document.createElement("div");
+        s.className="seat";
+        s.tabIndex=0;
+        s.setAttribute("aria-label",o!=="0x0000000000000000000000000000000000000000"?"Booked":"Available");
+        s.innerHTML=`<i class="fa-solid fa-chair"></i>${i}`;
+        if(o!=="0x0000000000000000000000000000000000000000"){
+            s.classList.add("booked");
+            s.title="Booked";
+        }else{
+            s.title="Available";
+            s.onclick=()=>selectSeat(i,s);
+            s.onkeydown=(e)=>{if(e.key==="Enter"||e.key===" "){selectSeat(i,s);}};
+        }
+        d.appendChild(s);
+    }
+}
+function selectSeat(n,e){
+    if(selectedSeat)selectedSeat.classList.remove("selected");
+    e.classList.add("selected");
+    selectedSeat=e;
+    showBookingModal(n,e);
+}
+function showBookingModal(n,e){
+    const m=document.createElement("div");
+    m.style.position="fixed";
+    m.style.top="0";
+    m.style.left="0";
+    m.style.width="100vw";
+    m.style.height="100vh";
+    m.style.background="rgba(0,0,0,0.45)";
+    m.style.display="flex";
+    m.style.alignItems="center";
+    m.style.justifyContent="center";
+    m.style.zIndex="9999";
+    m.innerHTML=`
+        <div style="background:#232526; color:#fff; border-radius:18px; padding:38px 32px 28px 32px; box-shadow:0 2px 32px #00c6ff44; min-width:320px; text-align:center; position:relative;">
+            <div style="font-size:2.4rem; color:#00c6ff; margin-bottom:12px;"><i class="fa-solid fa-chair"></i></div>
+            <div style="font-size:1.22rem; margin-bottom:22px;">Book seat <b>#${n}</b> for <span style="color:#90ee90;">0.01 ETH</span>?</div>
+            <button id="confirmBook" style="margin-right:18px;"><i class="fa-solid fa-check"></i> Confirm</button>
+            <button id="cancelBook" style="background:#ff4b2b;"><i class="fa-solid fa-xmark"></i> Cancel</button>
+        </div>`;
+    document.body.appendChild(m);
+    document.getElementById("confirmBook").onclick=()=>{
+        document.body.removeChild(m);
+        bookSeat(n);
+    };
+    document.getElementById("cancelBook").onclick=()=>{
+        document.body.removeChild(m);
+        e.classList.remove("selected");
+        selectedSeat=null;
+    };
+}
+async function bookSeat(n){
+    try{
+        const t=await contract.methods.bookSeat(n).send({from:account,value:web3.utils.toWei("0.01","ether")});
+        const ticket=`Seat: ${n}\nWallet: ${account}`;
+        QRCode.toCanvas(document.getElementById("qrcode"),ticket);
+        document.getElementById("msg").innerHTML=`<i class="fa-solid fa-circle-check"></i> Seat <b>${n}</b> booked by <b>${shortenAddress(account)}</b>`;
+        document.getElementById("ticketCard").style.display="block";
+        transactions.unshift({seat:n,txHash:t.transactionHash,time:new Date().toLocaleTimeString()});
+        updateTxnHistory();
+        loadSeats();
+        if(selectedSeat)selectedSeat.classList.remove("selected");
+        selectedSeat=null;
+    }catch(e){
+        showErrorModal("❌ Transaction failed: "+e.message);
+    }
+}
+function updateTxnHistory(){
+    const l=document.getElementById("txnList");
+    l.innerHTML="";
+    transactions.forEach(txn=>{
+        const d=document.createElement("div");
+        d.className="txn";
+        d.innerHTML=`🪑 Seat <b>#${txn.seat}</b><br>
+            <span style="color:#00c6ff;"><i class="fa-solid fa-link"></i></span> Txn: <a href="https://sepolia.etherscan.io/tx/${txn.txHash}" target="_blank">${shortenAddress(txn.txHash)}</a><br>
+            <span style="color:#90ee90;"><i class="fa-regular fa-clock"></i></span> ${txn.time}`;
+        l.appendChild(d);
+    });
+    if(transactions.length===0){
+        l.innerHTML="No transactions yet.";
+    }
+}
+function showErrorModal(msg){
+    const m=document.createElement("div");
+    m.style.position="fixed";
+    m.style.top="0";
+    m.style.left="0";
+    m.style.width="100vw";
+    m.style.height="100vh";
+    m.style.background="rgba(0,0,0,0.45)";
+    m.style.display="flex";
+    m.style.alignItems="center";
+    m.style.justifyContent="center";
+    m.style.zIndex="9999";
+    m.innerHTML=`
+        <div style="background:#232526; color:#fff; border-radius:18px; padding:38px 32px 28px 32px; box-shadow:0 2px 32px #ff4b2b44; min-width:320px; text-align:center; position:relative;">
+            <div style="font-size:2.4rem; color:#ff4b2b; margin-bottom:12px;"><i class="fa-solid fa-circle-xmark"></i></div>
+            <div style="font-size:1.12rem; margin-bottom:22px;">${msg}</div>
+            <button id="closeError" style="background:#ff4b2b;"><i class="fa-solid fa-xmark"></i> Close</button>
+        </div>`;
+    document.body.appendChild(m);
+    document.getElementById("closeError").onclick=()=>{document.body.removeChild(m);};
+}
+</script>
+</body>
+</html>

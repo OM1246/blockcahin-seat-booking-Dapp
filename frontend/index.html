@@ -1,458 +1,960 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>Blockchain Seat Booking dApp</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
-<style>
-body {
-    background: linear-gradient(135deg, #232526 0%, #414345 100%);
-    font-family: 'Montserrat', sans-serif;
-    color: #f5f5f5;
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-}
-.container {
-    max-width: 980px;
-    margin: 40px auto;
-    background: rgba(30,30,40,0.97);
-    border-radius: 22px;
-    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.37);
-    padding: 40px 36px 36px 36px;
-    position: relative;
-    overflow: hidden;
-}
-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 36px;
-    border-bottom: 1.5px solid #00c6ff33;
-    padding-bottom: 18px;
-}
-h2 {
-    font-size: 2.7rem;
-    letter-spacing: 1.5px;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    color: #00c6ff;
-    font-weight: 700;
-}
-#walletStatus {
-    margin: 0 0 0 12px;
-    color: #90ee90;
-    font-size: 1.1rem;
-    background: rgba(0,198,255,0.12);
-    padding: 7px 18px;
-    border-radius: 8px;
-    display: inline-block;
-    border: 1.5px solid #00c6ff44;
-}
-.wallet-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-button {
-    background: linear-gradient(90deg,#00c6ff 0%,#0072ff 100%);
-    border: none;
-    border-radius: 10px;
-    padding: 13px 32px;
-    color: #fff;
-    font-size: 1.08rem;
-    font-weight: bold;
-    cursor: pointer;
-    margin: 0;
-    transition: .2s;
-    box-shadow: 0 2px 8px rgba(0,198,255,0.12);
-    outline: none;
-    letter-spacing: .5px;
-    position: relative;
-}
-button:active {
-    transform: scale(0.98);
-}
-button:hover {
-    background: linear-gradient(90deg,#0072ff 0%,#00c6ff 100%);
-    transform: translateY(-2px) scale(1.04);
-    box-shadow: 0 4px 16px #00c6ff33;
-}
-#seats {
-    display: grid;
-    grid-template-columns: repeat(6, 70px);
-    gap: 22px 28px;
-    justify-content: center;
-    margin: 38px auto 22px auto;
-    background: rgba(255,255,255,0.05);
-    border-radius: 18px;
-    padding: 36px 0;
-    box-shadow: 0 2px 16px rgba(0,198,255,0.09);
-    position: relative;
-}
-.seat {
-    background: linear-gradient(135deg,#232526 0%,#414345 100%);
-    border: 2.5px solid #00c6ff;
-    border-radius: 16px;
-    padding: 22px 0 10px 0;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1.18rem;
-    color: #fff;
-    transition: .18s;
-    box-shadow: 0 2px 8px rgba(0,198,255,0.08);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-width: 70px;
-    min-height: 70px;
-    user-select: none;
-    outline: none;
-}
-.seat i {
-    font-size: 1.5rem;
-    margin-bottom: 5px;
-    color: #00c6ff;
-    transition: color .2s;
-}
-.seat:hover:not(.booked):not(.selected) {
-    background: linear-gradient(135deg,#00c6ff 0%,#90ee90 100%);
-    color: #232526;
-    border-color: #90ee90;
-    transform: scale(1.09);
-}
-.seat:hover:not(.booked):not(.selected) i {
-    color: #232526;
-}
-.booked {
-    background: linear-gradient(135deg,#ff4b2b 0%,#ff416c 100%)!important;
-    cursor: not-allowed;
-    color: white;
-    opacity: .7;
-    border-color: #ff4b2b;
-    position: relative;
-}
-.booked i {
-    color: #fff;
-}
-.booked::after {
-    content: "\f023";
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    position: absolute;
-    top: 10px;
-    right: 12px;
-    font-size: 1.2rem;
-    color: #fff;
-    opacity: .8;
-}
-.seat.selected {
-    background: linear-gradient(135deg,#90ee90 0%,#00c6ff 100%)!important;
-    color: #232526;
-    border-color: #90ee90;
-    box-shadow: 0 0 0 5px #90ee9033;
-    z-index: 2;
-}
-.seat.selected i {
-    color: #232526;
-}
-#ticketCard {
-    display: none;
-    margin: 32px auto 0 auto;
-    padding: 28px 36px 20px 36px;
-    border-radius: 18px;
-    background: rgba(255,255,255,0.13);
-    max-width: 440px;
-    box-shadow: 0 2px 16px rgba(0,198,255,0.09);
-    text-align: center;
-    position: relative;
-    border: 2px solid #00c6ff;
-    animation: fadeIn .7s;
-}
-#ticketCard h3 {
-    margin-top: 0;
-    font-size: 1.5rem;
-    color: #00c6ff;
-    letter-spacing: 1px;
-}
-canvas {
-    margin-top: 12px;
-    background: white;
-    padding: 10px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,198,255,0.08);
-}
-#msg {
-    margin-top: 16px;
-    color: #90ee90;
-    font-size: 1.13rem;
-    font-weight: 600;
-}
-#history {
-    max-width: 740px;
-    margin: 44px auto 0 auto;
-    background: rgba(255,255,255,0.10);
-    border-radius: 16px;
-    padding: 28px 32px 20px 32px;
-    box-shadow: 0 2px 12px rgba(0,198,255,0.07);
-    text-align: left;
-}
-#history h3 {
-    margin-top: 0;
-    color: #00c6ff;
-    font-size: 1.28rem;
-    letter-spacing: 1px;
-}
-.txn {
-    margin-bottom: 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.13);
-    padding-bottom: 12px;
-    font-size: 1.07rem;
-    line-height: 1.7;
-    word-break: break-all;
-    background: rgba(0,198,255,0.04);
-    border-radius: 7px;
-    padding-left: 10px;
-}
-.txn:last-child {
-    border-bottom: none;
-}
-.txn a {
-    color: #90ee90;
-    text-decoration: underline;
-    word-break: break-all;
-}
-.legend {
-    display: flex;
-    justify-content: center;
-    gap: 32px;
-    margin-top: 12px;
-    margin-bottom: 0;
-    font-size: 1.05rem;
-}
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.legend-box {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
-    display: inline-block;
-    margin-right: 4px;
-    border: 2px solid #00c6ff;
-}
-.legend-available {
-    background: linear-gradient(135deg,#232526 0%,#414345 100%);
-}
-.legend-booked {
-    background: linear-gradient(135deg,#ff4b2b 0%,#ff416c 100%);
-}
-.legend-selected {
-    background: linear-gradient(135deg,#90ee90 0%,#00c6ff 100%);
-}
-::-webkit-scrollbar {
-    width: 10px;
-    background: #232526;
-}
-::-webkit-scrollbar-thumb {
-    background: #00c6ff55;
-    border-radius: 6px;
-}
-@media (max-width:900px) {
-    .container { padding: 18px 2vw 18px 2vw; }
-    #seats { grid-template-columns: repeat(5, 54px); gap: 14px 10px; padding: 18px 0; }
-    .seat { min-width: 54px; min-height: 54px; font-size: 1rem; }
-    #ticketCard { padding: 16px 4vw 12px 4vw; }
-    #history { padding: 12px 4vw 10px 4vw; }
-}
-@media (max-width:600px) {
-    .container { padding: 8px 0 8px 0; }
-    header { flex-direction: column; gap: 12px; }
-    h2 { font-size: 1.5rem; }
-    #seats { grid-template-columns: repeat(3, 38px); gap: 8px 6px; padding: 10px 0; }
-    .seat { min-width: 38px; min-height: 38px; font-size: .9rem; }
-    #ticketCard { padding: 8px 2vw 8px 2vw; }
-    #history { padding: 8px 2vw 8px 2vw; }
-    .legend { gap: 10px; font-size: .95rem; }
-    .legend-box { width: 16px; height: 16px; }
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(30px);}
-    to { opacity: 1; transform: translateY(0);}
-}
-.glow {
-    box-shadow: 0 0 16px 4px #00c6ff55, 0 0 4px #90ee9055;
-    animation: glowPulse 1.5s infinite alternate;
-}
-@keyframes glowPulse {
-    from { box-shadow: 0 0 16px 4px #00c6ff55, 0 0 4px #90ee9055; }
-    to { box-shadow: 0 0 32px 8px #00c6ff99, 0 0 12px #90ee9099; }
-}
-</style>
-</head>
-<body>
-<div class="container">
-<header>
-    <h2><i class="fa-solid fa-ticket"></i> Blockchain Seat Booking</h2>
-    <div class="wallet-actions">
-        <div id="walletStatus"><i class="fa-solid fa-plug"></i> Wallet not connected</div>
-        <button onclick="connect()" class="glow"><i class="fa-solid fa-link"></i> Connect Wallet</button>
-    </div>
-</header>
-<div class="legend">
-    <div class="legend-item"><span class="legend-box legend-available"></span>Available</div>
-    <div class="legend-item"><span class="legend-box legend-booked"></span>Booked</div>
-    <div class="legend-item"><span class="legend-box legend-selected"></span>Selected</div>
-</div>
-<div id="seats"></div>
-<div id="ticketCard">
-    <h3><i class="fa-solid fa-ticket"></i> Your Ticket</h3>
-    <canvas id="qrcode"></canvas>
-    <p id="msg"></p>
-</div>
-<div id="history">
-    <h3><i class="fa-solid fa-clock-rotate-left"></i> Transaction History</h3>
-    <div id="txnList">No transactions yet.</div>
-</div>
-</div>
-<script>
-const contractAddress="0x5FbDB2315678afecb367f032d93F642f64180aa3";
-const contractABI=[{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"seat","type":"uint256"},{"indexed":true,"internalType":"address","name":"user","type":"address"}],"name":"SeatBooked","type":"event"},{"inputs":[{"internalType":"uint256","name":"seat","type":"uint256"}],"name":"bookSeat","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"uint256","name":"seat","type":"uint256"}],"name":"getSeatOwner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"price","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"seatOwners","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}];
-let web3,contract,account,selectedSeat=null;let transactions=[];
-function shortenAddress(a){return a.slice(0,6)+"..."+a.slice(-4);}
-async function connect(){
-    if(window.ethereum){
-        web3=new Web3(window.ethereum);
-        await window.ethereum.request({method:"eth_requestAccounts"});
-        const a=await web3.eth.getAccounts();
-        account=a[0];
-        contract=new web3.eth.Contract(contractABI,contractAddress);
-        document.getElementById("walletStatus").innerHTML=`<i class="fa-solid fa-circle-check"></i> Connected: <b>${shortenAddress(account)}</b>`;
-        document.querySelector("button.glow").classList.remove("glow");
-        loadSeats();
-    }else{
-        alert("Please install MetaMask.");
-    }
-}
-async function loadSeats(){
-    const d=document.getElementById("seats");
-    d.innerHTML="";
-    for(let i=1;i<=30;i++){
-        const o=await contract.methods.getSeatOwner(i).call();
-        const s=document.createElement("div");
-        s.className="seat";
-        s.tabIndex=0;
-        s.setAttribute("aria-label",o!=="0x0000000000000000000000000000000000000000"?"Booked":"Available");
-        s.innerHTML=`<i class="fa-solid fa-chair"></i>${i}`;
-        if(o!=="0x0000000000000000000000000000000000000000"){
-            s.classList.add("booked");
-            s.title="Booked";
-        }else{
-            s.title="Available";
-            s.onclick=()=>selectSeat(i,s);
-            s.onkeydown=(e)=>{if(e.key==="Enter"||e.key===" "){selectSeat(i,s);}};
+  <head>
+    <meta charset="UTF-8" />
+    <title>Blockchain Seat Booking dApp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary: #6c63ff;
+        --primary-light: #8a84ff;
+        --primary-dark: #5851d9;
+        --secondary: #00c6ff;
+        --success: #4ade80;
+        --danger: #ff4b2b;
+        --dark: #1a1a2e;
+        --darker: #16213e;
+        --light: #f5f5f5;
+        --gray: #a0a0a0;
+        --border-radius: 16px;
+        --transition: all 0.3s ease;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        --shadow-light: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+        font-family: "Montserrat", sans-serif;
+        color: var(--light);
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        padding: 20px 30px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .logo i {
+        font-size: 2.5rem;
+        color: var(--primary);
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .wallet-section {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .wallet-status {
+        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .wallet-status.connected {
+        color: var(--success);
+        background: rgba(76, 222, 128, 0.1);
+        border-color: rgba(76, 222, 128, 0.3);
+      }
+
+      .btn {
+        background: linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary-dark)
+        );
+        border: none;
+        border-radius: 50px;
+        padding: 12px 25px;
+        color: white;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: var(--shadow-light);
+      }
+
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(108, 99, 255, 0.3);
+      }
+
+      .btn:active {
+        transform: translateY(-1px);
+      }
+
+      .btn-success {
+        background: linear-gradient(135deg, var(--success), #22c55e);
+      }
+
+      .btn-danger {
+        background: linear-gradient(135deg, var(--danger), #e11d48);
+      }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 30px;
+      }
+
+      .seats-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        box-shadow: var(--shadow-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--light);
+      }
+
+      .section-title i {
+        color: var(--primary);
+      }
+
+      .legend {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+      }
+
+      .legend-box {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        display: inline-block;
+      }
+
+      .legend-available {
+        background: var(--primary);
+      }
+
+      .legend-booked {
+        background: var(--danger);
+      }
+
+      .legend-selected {
+        background: var(--success);
+      }
+
+      #seats {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 15px;
+        margin: 0 auto;
+      }
+
+      .seat {
+        aspect-ratio: 1;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-weight: 600;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.08);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .seat i {
+        font-size: 1.2rem;
+        margin-bottom: 5px;
+        color: var(--primary);
+      }
+
+      .seat:hover:not(.booked):not(.selected) {
+        background: rgba(108, 99, 255, 0.2);
+        border-color: var(--primary);
+        transform: translateY(-5px);
+      }
+
+      .seat.booked {
+        background: rgba(255, 75, 43, 0.2);
+        border-color: var(--danger);
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      .seat.booked i {
+        color: var(--danger);
+      }
+
+      .seat.selected {
+        background: rgba(76, 222, 128, 0.2);
+        border-color: var(--success);
+        transform: scale(1.05);
+      }
+
+      .seat.selected i {
+        color: var(--success);
+      }
+
+      .seat-number {
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+
+      .ticket-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        box-shadow: var(--shadow-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+      }
+
+      .ticket-card.hidden {
+        display: none;
+      }
+
+      .ticket-header {
+        margin-bottom: 20px;
+      }
+
+      .ticket-header i {
+        font-size: 2.5rem;
+        color: var(--primary);
+        margin-bottom: 10px;
+      }
+
+      .ticket-details {
+        margin-bottom: 20px;
+        text-align: left;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        border-radius: 10px;
+      }
+
+      .ticket-detail {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+      }
+
+      .ticket-detail:last-child {
+        margin-bottom: 0;
+      }
+
+      .ticket-detail .label {
+        color: var(--gray);
+      }
+
+      .ticket-detail .value {
+        font-weight: 600;
+      }
+
+      #qrcode {
+        margin: 15px auto;
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 180px;
+      }
+
+      .history-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        box-shadow: var(--shadow-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .history-list {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 15px;
+      }
+
+      .history-item {
+        padding: 15px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        margin-bottom: 10px;
+        font-size: 0.85rem;
+      }
+
+      .history-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .history-item-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .history-seat {
+        font-weight: 600;
+        color: var(--primary);
+      }
+
+      .history-time {
+        color: var(--gray);
+        font-size: 0.8rem;
+      }
+
+      .history-txn {
+        word-break: break-all;
+        color: var(--secondary);
+        font-size: 0.8rem;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 30px;
+        color: var(--gray);
+      }
+
+      .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        color: var(--gray);
+      }
+
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition);
+      }
+
+      .modal.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        background: var(--darker);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        max-width: 450px;
+        width: 90%;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transform: translateY(20px);
+        transition: var(--transition);
+      }
+
+      .modal.active .modal-content {
+        transform: translateY(0);
+      }
+
+      .modal-header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .modal-header i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: var(--primary);
+      }
+
+      .modal-body {
+        margin-bottom: 25px;
+        text-align: center;
+      }
+
+      .modal-footer {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+      }
+
+      .modal-footer .btn {
+        min-width: 120px;
+      }
+
+      /* Responsive styles */
+      @media (max-width: 1024px) {
+        .main-content {
+          grid-template-columns: 1fr;
         }
-        d.appendChild(s);
-    }
-}
-function selectSeat(n,e){
-    if(selectedSeat)selectedSeat.classList.remove("selected");
-    e.classList.add("selected");
-    selectedSeat=e;
-    showBookingModal(n,e);
-}
-function showBookingModal(n,e){
-    const m=document.createElement("div");
-    m.style.position="fixed";
-    m.style.top="0";
-    m.style.left="0";
-    m.style.width="100vw";
-    m.style.height="100vh";
-    m.style.background="rgba(0,0,0,0.45)";
-    m.style.display="flex";
-    m.style.alignItems="center";
-    m.style.justifyContent="center";
-    m.style.zIndex="9999";
-    m.innerHTML=`
-        <div style="background:#232526; color:#fff; border-radius:18px; padding:38px 32px 28px 32px; box-shadow:0 2px 32px #00c6ff44; min-width:320px; text-align:center; position:relative;">
-            <div style="font-size:2.4rem; color:#00c6ff; margin-bottom:12px;"><i class="fa-solid fa-chair"></i></div>
-            <div style="font-size:1.22rem; margin-bottom:22px;">Book seat <b>#${n}</b> for <span style="color:#90ee90;">0.01 ETH</span>?</div>
-            <button id="confirmBook" style="margin-right:18px;"><i class="fa-solid fa-check"></i> Confirm</button>
-            <button id="cancelBook" style="background:#ff4b2b;"><i class="fa-solid fa-xmark"></i> Cancel</button>
-        </div>`;
-    document.body.appendChild(m);
-    document.getElementById("confirmBook").onclick=()=>{
-        document.body.removeChild(m);
-        bookSeat(n);
-    };
-    document.getElementById("cancelBook").onclick=()=>{
-        document.body.removeChild(m);
-        e.classList.remove("selected");
-        selectedSeat=null;
-    };
-}
-async function bookSeat(n){
-    try{
-        const t=await contract.methods.bookSeat(n).send({from:account,value:web3.utils.toWei("0.01","ether")});
-        const ticket=`Seat: ${n}\nWallet: ${account}`;
-        QRCode.toCanvas(document.getElementById("qrcode"),ticket);
-        document.getElementById("msg").innerHTML=`<i class="fa-solid fa-circle-check"></i> Seat <b>${n}</b> booked by <b>${shortenAddress(account)}</b>`;
-        document.getElementById("ticketCard").style.display="block";
-        transactions.unshift({seat:n,txHash:t.transactionHash,time:new Date().toLocaleTimeString()});
-        updateTxnHistory();
-        loadSeats();
-        if(selectedSeat)selectedSeat.classList.remove("selected");
-        selectedSeat=null;
-    }catch(e){
-        showErrorModal("❌ Transaction failed: "+e.message);
-    }
-}
-function updateTxnHistory(){
-    const l=document.getElementById("txnList");
-    l.innerHTML="";
-    transactions.forEach(txn=>{
-        const d=document.createElement("div");
-        d.className="txn";
-        d.innerHTML=`🪑 Seat <b>#${txn.seat}</b><br>
-            <span style="color:#00c6ff;"><i class="fa-solid fa-link"></i></span> Txn: <a href="https://sepolia.etherscan.io/tx/${txn.txHash}" target="_blank">${shortenAddress(txn.txHash)}</a><br>
-            <span style="color:#90ee90;"><i class="fa-regular fa-clock"></i></span> ${txn.time}`;
-        l.appendChild(d);
-    });
-    if(transactions.length===0){
-        l.innerHTML="No transactions yet.";
-    }
-}
-function showErrorModal(msg){
-    const m=document.createElement("div");
-    m.style.position="fixed";
-    m.style.top="0";
-    m.style.left="0";
-    m.style.width="100vw";
-    m.style.height="100vh";
-    m.style.background="rgba(0,0,0,0.45)";
-    m.style.display="flex";
-    m.style.alignItems="center";
-    m.style.justifyContent="center";
-    m.style.zIndex="9999";
-    m.innerHTML=`
-        <div style="background:#232526; color:#fff; border-radius:18px; padding:38px 32px 28px 32px; box-shadow:0 2px 32px #ff4b2b44; min-width:320px; text-align:center; position:relative;">
-            <div style="font-size:2.4rem; color:#ff4b2b; margin-bottom:12px;"><i class="fa-solid fa-circle-xmark"></i></div>
-            <div style="font-size:1.12rem; margin-bottom:22px;">${msg}</div>
-            <button id="closeError" style="background:#ff4b2b;"><i class="fa-solid fa-xmark"></i> Close</button>
-        </div>`;
-    document.body.appendChild(m);
-    document.getElementById("closeError").onclick=()=>{document.body.removeChild(m);};
-}
-</script>
-</body>
+
+        .sidebar {
+          grid-row: 1;
+        }
+      }
+
+      @media (max-width: 768px) {
+        header {
+          flex-direction: column;
+          gap: 20px;
+          text-align: center;
+        }
+
+        .wallet-section {
+          flex-direction: column;
+          width: 100%;
+        }
+
+        .wallet-status {
+          width: 100%;
+          justify-content: center;
+        }
+
+        #seats {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 10px;
+        }
+
+        .seats-section,
+        .ticket-card,
+        .history-section {
+          padding: 20px;
+        }
+
+        #seats {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .legend {
+          flex-direction: column;
+          gap: 10px;
+          align-items: center;
+        }
+
+        .modal-content {
+          padding: 20px;
+        }
+
+        .modal-footer {
+          flex-direction: column;
+        }
+      }
+
+      /* Scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 10px;
+      }
+
+      /* Animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+      }
+
+      /* Glow effect for selected seat */
+      .glow {
+        box-shadow: 0 0 15px rgba(108, 99, 255, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo">
+          <i class="fa-solid fa-ticket"></i>
+          <h1>Blockchain Seat Booking</h1>
+        </div>
+        <div class="wallet-section">
+          <div class="wallet-status" id="walletStatus">
+            <i class="fa-solid fa-plug"></i> Wallet not connected
+          </div>
+          <button class="btn" onclick="connect()">
+            <i class="fa-solid fa-link"></i> Connect Wallet
+          </button>
+        </div>
+      </header>
+
+      <div class="main-content">
+        <div class="seats-section">
+          <h2 class="section-title">
+            <i class="fa-solid fa-chair"></i> Available Seats
+          </h2>
+
+          <div class="legend">
+            <div class="legend-item">
+              <span class="legend-box legend-available"></span>Available
+            </div>
+            <div class="legend-item">
+              <span class="legend-box legend-booked"></span>Booked
+            </div>
+            <div class="legend-item">
+              <span class="legend-box legend-selected"></span>Selected
+            </div>
+          </div>
+
+          <div id="seats"></div>
+        </div>
+
+        <div class="sidebar">
+          <div class="ticket-card hidden" id="ticketCard">
+            <div class="ticket-header">
+              <i class="fa-solid fa-ticket"></i>
+              <h3>Your Ticket</h3>
+            </div>
+
+            <div class="ticket-details">
+              <div class="ticket-detail">
+                <span class="label">Seat Number:</span>
+                <span class="value" id="ticketSeat">-</span>
+              </div>
+              <div class="ticket-detail">
+                <span class="label">Owner:</span>
+                <span class="value" id="ticketOwner">-</span>
+              </div>
+              <div class="ticket-detail">
+                <span class="label">Price:</span>
+                <span class="value">0.01 ETH</span>
+              </div>
+            </div>
+
+            <canvas id="qrcode"></canvas>
+            <p id="msg" style="margin-top: 15px; color: var(--success)"></p>
+          </div>
+
+          <div class="history-section">
+            <h2 class="section-title">
+              <i class="fa-solid fa-clock-rotate-left"></i> Transaction History
+            </h2>
+            <div class="history-list" id="txnList">
+              <div class="empty-state">
+                <i class="fa-solid fa-receipt"></i>
+                <p>No transactions yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmationModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <i class="fa-solid fa-chair"></i>
+          <h3>Confirm Booking</h3>
+        </div>
+        <div class="modal-body">
+          <p>
+            Book seat <strong id="modalSeatNumber">-</strong> for
+            <strong style="color: var(--success)">0.01 ETH</strong>?
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-success" id="confirmBook">
+            <i class="fa-solid fa-check"></i> Confirm
+          </button>
+          <button class="btn btn-danger" id="cancelBook">
+            <i class="fa-solid fa-xmark"></i> Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal" id="errorModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <h3>Transaction Failed</h3>
+        </div>
+        <div class="modal-body">
+          <p id="errorMessage">An error occurred during the transaction.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="closeError">
+            <i class="fa-solid fa-xmark"></i> Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Contract details
+      const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+      const contractABI = [
+        { inputs: [], stateMutability: "nonpayable", type: "constructor" },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "seat",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "user",
+              type: "address",
+            },
+          ],
+          name: "SeatBooked",
+          type: "event",
+        },
+        {
+          inputs: [{ internalType: "uint256", name: "seat", type: "uint256" }],
+          name: "bookSeat",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [{ internalType: "uint256", name: "seat", type: "uint256" }],
+          name: "getSeatOwner",
+          outputs: [{ internalType: "address", name: "", type: "address" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "owner",
+          outputs: [{ internalType: "address", name: "", type: "address" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "price",
+          outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+          name: "seatOwners",
+          outputs: [{ internalType: "address", name: "", type: "address" }],
+          stateMutability: "view",
+          type: "function",
+        },
+      ];
+
+      // Global variables
+      let web3,
+        contract,
+        account,
+        selectedSeat = null;
+      let transactions = [];
+
+      // Utility functions
+      function shortenAddress(address) {
+        return address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
+      }
+
+      // Connect wallet function
+      async function connect() {
+        if (window.ethereum) {
+          try {
+            web3 = new Web3(window.ethereum);
+            await window.ethereum.request({ method: "eth_requestAccounts" });
+            const accounts = await web3.eth.getAccounts();
+            account = accounts[0];
+
+            contract = new web3.eth.Contract(contractABI, contractAddress);
+
+            // Update UI
+            document.getElementById(
+              "walletStatus"
+            ).innerHTML = `<i class="fa-solid fa-circle-check"></i> Connected: <b>${shortenAddress(
+              account
+            )}</b>`;
+            document.getElementById("walletStatus").classList.add("connected");
+
+            loadSeats();
+          } catch (error) {
+            showError("Failed to connect wallet: " + error.message);
+          }
+        } else {
+          showError("Please install MetaMask to use this dApp.");
+        }
+      }
+
+      // Load seats from contract
+      async function loadSeats() {
+        const seatsContainer = document.getElementById("seats");
+        seatsContainer.innerHTML = "";
+
+        for (let i = 1; i <= 30; i++) {
+          const owner = await contract.methods.getSeatOwner(i).call();
+          const seatElement = document.createElement("div");
+          seatElement.className = "seat";
+          seatElement.setAttribute("data-seat", i);
+
+          if (owner !== "0x0000000000000000000000000000000000000000") {
+            seatElement.classList.add("booked");
+            seatElement.innerHTML = `
+              <i class="fa-solid fa-lock"></i>
+              <span class="seat-number">${i}</span>
+            `;
+          } else {
+            seatElement.innerHTML = `
+              <i class="fa-solid fa-chair"></i>
+              <span class="seat-number">${i}</span>
+            `;
+            seatElement.addEventListener("click", () =>
+              selectSeat(i, seatElement)
+            );
+          }
+
+          seatsContainer.appendChild(seatElement);
+        }
+      }
+
+      // Select a seat
+      function selectSeat(seatNumber, seatElement) {
+        // Deselect previous seat
+        if (selectedSeat) {
+          selectedSeat.classList.remove("selected", "glow");
+        }
+
+        // Select new seat
+        seatElement.classList.add("selected", "glow");
+        selectedSeat = seatElement;
+
+        // Show confirmation modal
+        document.getElementById("modalSeatNumber").textContent = seatNumber;
+        document.getElementById("confirmationModal").classList.add("active");
+
+        // Set up event listeners for modal buttons
+        document.getElementById("confirmBook").onclick = () => {
+          document
+            .getElementById("confirmationModal")
+            .classList.remove("active");
+          bookSeat(seatNumber);
+        };
+
+        document.getElementById("cancelBook").onclick = () => {
+          document
+            .getElementById("confirmationModal")
+            .classList.remove("active");
+          seatElement.classList.remove("selected", "glow");
+          selectedSeat = null;
+        };
+      }
+
+      // Book a seat
+      async function bookSeat(seatNumber) {
+        try {
+          const transaction = await contract.methods.bookSeat(seatNumber).send({
+            from: account,
+            value: web3.utils.toWei("0.01", "ether"),
+          });
+
+          // Generate QR code
+          const ticketData = `Seat: ${seatNumber}\nWallet: ${account}\nTxn: ${transaction.transactionHash}`;
+          QRCode.toCanvas(document.getElementById("qrcode"), ticketData, {
+            width: 180,
+            margin: 1,
+          });
+
+          // Update ticket details
+          document.getElementById("ticketSeat").textContent = seatNumber;
+          document.getElementById("ticketOwner").textContent =
+            shortenAddress(account);
+          document.getElementById(
+            "msg"
+          ).innerHTML = `<i class="fa-solid fa-circle-check"></i> Successfully booked seat ${seatNumber}`;
+
+          // Show ticket
+          document.getElementById("ticketCard").classList.remove("hidden");
+          document.getElementById("ticketCard").classList.add("fade-in");
+
+          // Add to transaction history
+          transactions.unshift({
+            seat: seatNumber,
+            txHash: transaction.transactionHash,
+            time: new Date().toLocaleTimeString(),
+            date: new Date().toLocaleDateString(),
+          });
+
+          updateTransactionHistory();
+          loadSeats();
+
+          // Reset selection
+          if (selectedSeat) {
+            selectedSeat.classList.remove("selected", "glow");
+            selectedSeat = null;
+          }
+        } catch (error) {
+          showError("Transaction failed: " + error.message);
+        }
+      }
+
+      // Update transaction history
+      function updateTransactionHistory() {
+        const txnList = document.getElementById("txnList");
+
+        if (transactions.length === 0) {
+          txnList.innerHTML = `
+            <div class="empty-state">
+              <i class="fa-solid fa-receipt"></i>
+              <p>No transactions yet</p>
+            </div>
+          `;
+          return;
+        }
+
+        txnList.innerHTML = "";
+
+        transactions.forEach((txn) => {
+          const historyItem = document.createElement("div");
+          historyItem.className = "history-item fade-in";
+          historyItem.innerHTML = `
+            <div class="history-item-header">
+              <span class="history-seat">Seat #${txn.seat}</span>
+              <span class="history-time">${txn.date} ${txn.time}</span>
+            </div>
+            <div class="history-txn">
+              <i class="fa-solid fa-link"></i> 
+              <a href="https://sepolia.etherscan.io/tx/${
+                txn.txHash
+              }" target="_blank">
+                ${shortenAddress(txn.txHash)}
+              </a>
+            </div>
+          `;
+          txnList.appendChild(historyItem);
+        });
+      }
+
+      // Show error modal
+      function showError(message) {
+        document.getElementById("errorMessage").textContent = message;
+        document.getElementById("errorModal").classList.add("active");
+
+        document.getElementById("closeError").onclick = () => {
+          document.getElementById("errorModal").classList.remove("active");
+        };
+      }
+
+      // Close modals when clicking outside
+      window.addEventListener("click", (event) => {
+        const confirmationModal = document.getElementById("confirmationModal");
+        const errorModal = document.getElementById("errorModal");
+
+        if (event.target === confirmationModal) {
+          confirmationModal.classList.remove("active");
+          if (selectedSeat) {
+            selectedSeat.classList.remove("selected", "glow");
+            selectedSeat = null;
+          }
+        }
+
+        if (event.target === errorModal) {
+          errorModal.classList.remove("active");
+        }
+      });
+    </script>
+  </body>
 </html>

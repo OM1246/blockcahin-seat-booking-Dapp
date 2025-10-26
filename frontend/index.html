@@ -147,6 +147,10 @@
         background: linear-gradient(135deg, var(--danger), #e11d48);
       }
 
+      .btn-secondary {
+        background: linear-gradient(135deg, var(--secondary), #0099cc);
+      }
+
       .main-content {
         display: grid;
         grid-template-columns: 1fr 350px;
@@ -334,6 +338,53 @@
         max-width: 180px;
       }
 
+      .qr-actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .email-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .email-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        text-align: left;
+      }
+
+      .form-group label {
+        font-size: 0.9rem;
+        color: var(--gray);
+      }
+
+      .form-group input {
+        padding: 12px 15px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--light);
+        font-size: 0.9rem;
+        transition: var(--transition);
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: rgba(255, 255, 255, 0.15);
+      }
+
       .history-section {
         background: rgba(255, 255, 255, 0.05);
         border-radius: var(--border-radius);
@@ -456,6 +507,26 @@
 
       .modal-footer .btn {
         min-width: 120px;
+      }
+
+      .email-status {
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        text-align: center;
+      }
+
+      .email-status.success {
+        background: rgba(76, 222, 128, 0.2);
+        color: var(--success);
+        border: 1px solid rgba(76, 222, 128, 0.3);
+      }
+
+      .email-status.error {
+        background: rgba(255, 75, 43, 0.2);
+        color: var(--danger);
+        border: 1px solid rgba(255, 75, 43, 0.3);
       }
 
       /* Responsive styles */
@@ -616,10 +687,39 @@
                 <span class="label">Price:</span>
                 <span class="value">0.01 ETH</span>
               </div>
+              <div class="ticket-detail">
+                <span class="label">Transaction:</span>
+                <span class="value" id="ticketTxHash">-</span>
+              </div>
             </div>
 
             <canvas id="qrcode"></canvas>
+
+            <div class="qr-actions">
+              <button class="btn btn-secondary" id="downloadQRBtn">
+                <i class="fa-solid fa-download"></i> Download QR Code
+              </button>
+            </div>
+
             <p id="msg" style="margin-top: 15px; color: var(--success)"></p>
+
+            <div class="email-section">
+              <h4><i class="fa-solid fa-envelope"></i> Email Ticket</h4>
+              <div class="email-form">
+                <div class="form-group">
+                  <label for="emailInput">Email Address</label>
+                  <input
+                    type="email"
+                    id="emailInput"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                <button class="btn btn-secondary" id="sendEmailBtn">
+                  <i class="fa-solid fa-paper-plane"></i> Send Ticket to Email
+                </button>
+              </div>
+              <div id="emailStatus" class="email-status hidden"></div>
+            </div>
           </div>
 
           <div class="history-section">
@@ -746,10 +846,43 @@
         account,
         selectedSeat = null;
       let transactions = [];
+      let currentTicket = null;
 
       // Utility functions
       function shortenAddress(address) {
         return address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
+      }
+
+      // Function to download QR code
+      function downloadQRCode() {
+        if (!currentTicket) {
+          alert("No QR code available to download");
+          return;
+        }
+
+        const canvas = document.getElementById("qrcode");
+        if (!canvas) {
+          alert("QR code not found");
+          return;
+        }
+
+        try {
+          // Create a temporary link element
+          const link = document.createElement("a");
+          link.download = `ticket-seat-${currentTicket.seat}.png`;
+          link.href = canvas.toDataURL("image/png");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Show success message
+          document.getElementById(
+            "msg"
+          ).innerHTML = `<i class="fa-solid fa-circle-check"></i> QR code downloaded successfully`;
+        } catch (error) {
+          console.error("Error downloading QR code:", error);
+          alert("Failed to download QR code");
+        }
       }
 
       // Connect wallet function
@@ -851,6 +984,13 @@
             value: web3.utils.toWei("0.01", "ether"),
           });
 
+          // Store current ticket data
+          currentTicket = {
+            seat: seatNumber,
+            wallet: account,
+            txHash: transaction.transactionHash,
+          };
+
           // Generate QR code
           const ticketData = `Seat: ${seatNumber}\nWallet: ${account}\nTxn: ${transaction.transactionHash}`;
           QRCode.toCanvas(document.getElementById("qrcode"), ticketData, {
@@ -862,6 +1002,9 @@
           document.getElementById("ticketSeat").textContent = seatNumber;
           document.getElementById("ticketOwner").textContent =
             shortenAddress(account);
+          document.getElementById("ticketTxHash").textContent = shortenAddress(
+            transaction.transactionHash
+          );
           document.getElementById(
             "msg"
           ).innerHTML = `<i class="fa-solid fa-circle-check"></i> Successfully booked seat ${seatNumber}`;
@@ -869,6 +1012,10 @@
           // Show ticket
           document.getElementById("ticketCard").classList.remove("hidden");
           document.getElementById("ticketCard").classList.add("fade-in");
+
+          // Reset email form
+          document.getElementById("emailInput").value = "";
+          document.getElementById("emailStatus").classList.add("hidden");
 
           // Add to transaction history
           transactions.unshift({
@@ -888,6 +1035,83 @@
           }
         } catch (error) {
           showError("Transaction failed: " + error.message);
+        }
+      }
+
+      // Send ticket via email
+      async function sendTicketEmail() {
+        if (!currentTicket) {
+          showEmailStatus("No ticket available to send", "error");
+          return;
+        }
+
+        const email = document.getElementById("emailInput").value.trim();
+
+        if (!email) {
+          showEmailStatus("Please enter a valid email address", "error");
+          return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          showEmailStatus("Please enter a valid email address", "error");
+          return;
+        }
+
+        try {
+          // Show loading state
+          const sendBtn = document.getElementById("sendEmailBtn");
+          const originalText = sendBtn.innerHTML;
+          sendBtn.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+          sendBtn.disabled = true;
+
+          // Send request to server
+          const response = await fetch("http://localhost:3000/send-ticket", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+              seat: currentTicket.seat,
+              wallet: currentTicket.wallet,
+              txHash: currentTicket.txHash,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showEmailStatus("Ticket sent successfully to " + email, "success");
+          } else {
+            showEmailStatus("Failed to send email: " + result.message, "error");
+          }
+        } catch (error) {
+          console.error("Error sending email:", error);
+          showEmailStatus("Failed to send email. Please try again.", "error");
+        } finally {
+          // Reset button state
+          const sendBtn = document.getElementById("sendEmailBtn");
+          sendBtn.innerHTML =
+            '<i class="fa-solid fa-paper-plane"></i> Send Ticket to Email';
+          sendBtn.disabled = false;
+        }
+      }
+
+      // Show email status
+      function showEmailStatus(message, type) {
+        const emailStatus = document.getElementById("emailStatus");
+        emailStatus.textContent = message;
+        emailStatus.className = "email-status " + type;
+        emailStatus.classList.remove("hidden");
+
+        // Auto-hide success messages after 5 seconds
+        if (type === "success") {
+          setTimeout(() => {
+            emailStatus.classList.add("hidden");
+          }, 5000);
         }
       }
 
@@ -938,6 +1162,28 @@
         };
       }
 
+      // Initialize event listeners
+      function initEventListeners() {
+        // Send email button
+        document
+          .getElementById("sendEmailBtn")
+          .addEventListener("click", sendTicketEmail);
+
+        // Download QR code button
+        document
+          .getElementById("downloadQRBtn")
+          .addEventListener("click", downloadQRCode);
+
+        // Enter key in email input
+        document
+          .getElementById("emailInput")
+          .addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+              sendTicketEmail();
+            }
+          });
+      }
+
       // Close modals when clicking outside
       window.addEventListener("click", (event) => {
         const confirmationModal = document.getElementById("confirmationModal");
@@ -954,6 +1200,11 @@
         if (event.target === errorModal) {
           errorModal.classList.remove("active");
         }
+      });
+
+      // Initialize the app
+      document.addEventListener("DOMContentLoaded", () => {
+        initEventListeners();
       });
     </script>
   </body>

@@ -29,7 +29,7 @@ A decentralized seat booking application built on Ethereum blockchain that allow
 *Interactive seat map with real-time availability status*
 
 ### My Tickets
-![My Tickets](screenshots/Screenshot_30-11-2025_13727_127.0.0.1.jpeg)
+![My Tickets](screenshots/Screenshot_30-11-2025_13655_127.0.0.1.jpeg)
 *View and manage all your booked tickets in one place*
 
 ## 🚀 Getting Started

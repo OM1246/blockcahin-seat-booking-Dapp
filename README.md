@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🎟️ BlockTickets - Blockchain Seat Booking dApp
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>BlockTickets - My Tickets</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/theme.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="main-header">
+        <div class="logo">
+          <i class="fa-solid fa-ticket"></i>
+          <h1>BlockTickets</h1>
+        </div>
+        <nav class="main-nav">
+          <ul>
+            <li><a href="index.html">Events</a></li>
+            <li><a href="mytickets.html" class="active">My Tickets</a></li>
+          </ul>
+        </nav>
+        <div class="wallet-section">
+          <button class="theme-toggle" id="themeToggle">
+            <i class="fa-solid fa-moon"></i> Dark
+          </button>
+          <div class="wallet-status" id="walletStatus">
+            <i class="fa-solid fa-plug"></i> Wallet not connected
+          </div>
+          <button class="btn" id="connectWalletBtn">
+            <i class="fa-solid fa-link"></i> Connect Wallet
+          </button>
+        </div>
+      </header>
+
+      <div class="main-content">
+        <h2 class="section-title" style="margin-top: 20px">
+          <i class="fa-solid fa-ticket-simple"></i> My Tickets
+        </h2>
+        <div class="my-tickets-grid" id="myTicketsGrid">
+          <div class="empty-state" id="emptyTickets">
+            <i class="fa-solid fa-receipt"></i>
+            <p>You don't have any tickets yet.</p>
+            <p>Book a ticket from the Events page.</p>
+            <a href="index.html" class="btn" style="margin-top: 20px">
+              <i class="fa-solid fa-arrow-left"></i> Browse Events
+            </a>
+          </div>
+
+          <!-- Sample ticket for demonstration -->
+          <div class="ticket-card">
+            <div class="ticket-header">
+              <i class="fa-solid fa-ticket"></i>
+              <h3>Summer Music Festival</h3>
+            </div>
+            <div class="ticket-details">
+              <div class="ticket-detail">
+                <span class="label">Seat Number:</span>
+                <span class="value">#42</span>
+              </div>
+              <div class="ticket-detail">
+                <span class="label">Date:</span>
+                <span class="value">July 15, 2023</span>
+              </div>
+              <div class="ticket-detail">
+                <span class="label">Location:</span>
+                <span class="value">Central Park, NY</span>
+              </div>
+              <div class="ticket-detail">
+                <span class="label">Price:</span>
+                <span class="value">0.02 ETH</span>
+              </div>
+              <div class="ticket-detail">
+                <span class="label">Transaction:</span>
+                <span class="value" style="font-size: 0.7rem"
+                  >0x7f2...a8d1</span
+                >
+              </div>
+            </div>
+            <canvas id="qrcode-sample" style="margin: 20px auto"></canvas>
+            <div class="qr-actions">
+              <button class="btn btn-secondary">
+                <i class="fa-solid fa-download"></i> Download QR
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/mytickets.js"></script>
+    <script>
+      // Generate sample QR code for demonstration
+      document.addEventListener("DOMContentLoaded", function () {
+        const qrCanvas = document.getElementById("qrcode-sample");
+        if (qrCanvas && typeof QRCode !== "undefined") {
+          QRCode.toCanvas(
+            qrCanvas,
+            "Sample Ticket Data: Summer Music Festival, Seat #42",
+            {
+              width: 150,
+              height: 150,
+              margin: 2,
+              color: {
+                dark: "#0f172a",
+                light: "#ffffff",
+              },
+            },
+            function (error) {
+              if (error) console.error(error);
+            }
+          );
+        }
+      });
+    </script>
+  </body>
+</html>

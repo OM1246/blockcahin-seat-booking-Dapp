@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Blockchain Seat Booking dApp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/theme.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="main-header">
+        <div class="logo">
+          <i class="fa-solid fa-ticket"></i>
+          <h1>BlockTickets</h1>
+        </div>
+        <nav class="main-nav">
+          <ul>
+            <li><a href="index.html">Events</a></li>
+            <li><a href="mytickets.html">My Tickets</a></li>
+          </ul>
+        </nav>
+        <div class="wallet-section">
+          <button class="theme-toggle" id="themeToggle">
+            <i class="fa-solid fa-moon"></i> Dark
+          </button>
+          <div class="wallet-status" id="walletStatus">
+            <i class="fa-solid fa-plug"></i> Wallet not connected
+          </div>
+          <button class="btn" id="connectWalletBtn">
+            <i class="fa-solid fa-link"></i> Connect Wallet
+          </button>
+        </div>
+      </header>
+
+      <div class="event-header">
+        <h2 id="eventName">Loading Event...</h2>
+        <p>
+          <i class="fa-solid fa-calendar-day"></i>
+          <span id="eventDate">...</span>
+        </p>
+        <p>
+          <i class="fa-solid fa-location-dot"></i>
+          <span id="eventLocation">...</span>
+        </p>
+      </div>
+
+      <div class="main-content">
+        <div class="seats-section">
+          <h2 class="section-title">
+            <i class="fa-solid fa-chair"></i> Available Seats
+          </h2>
+
+          <div class="legend">
+            <div class="legend-item">
+              <span class="legend-box legend-available"></span>Available
+            </div>
+            <div class="legend-item">
+              <span class="legend-box legend-booked"></span>Booked
+            </div>
+            <div class="legend-item">
+              <span class="legend-box legend-selected"></span>Selected
+            </div>
+          </div>
+
+          <div id="seats">
+            <div class="spinner-overlay hidden" id="seatSpinner">
+              <div class="spinner"></div>
+              <p>Loading seats from blockchain...</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar">
+          <div class="ticket-card hidden" id="ticketCard">
+            <div class="ticket-header">
+              <i class="fa-solid fa-ticket"></i>
+              <h3>Your Ticket</h3>
+            </div>
+            <div class="ticket-details">
+              <div class="ticket-detail">
+                <span class="label">Event:</span>
+                <span class="value" id="ticketEventName">-</span>
+              </div>
+              <div class="ticket-detail">
+                <span class="label">Seat Number:</span>
+                <span class="value" id="ticketSeat">-</span>
+              </div>
+              <div class="ticket-detail">
+                <span class="label">Owner:</span>
+                <span class="value" id="ticketOwner">-</span>
+              </div>
+              <div class="ticket-detail">
+                <span class="label">Price:</span>
+                <span class="value">0.01 ETH</span>
+              </div>
+              <div class="ticket-detail">
+                <span class="label">Transaction:</span>
+                <span class="value" id="ticketTxHash">-</span>
+              </div>
+            </div>
+            <canvas id="qrcode"></canvas>
+            <div class="qr-actions">
+              <button class="btn btn-secondary" id="downloadQRBtn">
+                <i class="fa-solid fa-download"></i> Download QR Code
+              </button>
+            </div>
+            <p id="msg" style="margin-top: 15px; color: var(--success)"></p>
+            <div class="email-section">
+              <h4><i class="fa-solid fa-envelope"></i> Email Ticket</h4>
+              <div class="email-form">
+                <div class="form-group">
+                  <label for="emailInput">Email Address</label>
+                  <input
+                    type="email"
+                    id="emailInput"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                <button class="btn btn-secondary" id="sendEmailBtn">
+                  <i class="fa-solid fa-paper-plane"></i> Send Ticket to Email
+                </button>
+              </div>
+              <div id="emailStatus" class="email-status hidden"></div>
+            </div>
+          </div>
+
+          <div class="history-section">
+            <h2 class="section-title">
+              <i class="fa-solid fa-clock-rotate-left"></i> Transaction History
+            </h2>
+            <div class="history-list" id="txnList">
+              <div class="empty-state">
+                <i class="fa-solid fa-receipt"></i>
+                <p>No transactions yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="confirmationModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <i class="fa-solid fa-chair"></i>
+          <h3>Confirm Booking</h3>
+        </div>
+        <div class="modal-body">
+          <p>
+            Book seat <strong id="modalSeatNumber">-</strong> for
+            <strong style="color: var(--success)">0.01 ETH</strong>?
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-success" id="confirmBook">
+            <i class="fa-solid fa-check"></i> Confirm
+          </button>
+          <button class="btn btn-danger" id="cancelBook">
+            <i class="fa-solid fa-xmark"></i> Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="errorModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <h3>Transaction Failed</h3>
+        </div>
+        <div class="modal-body">
+          <p id="errorMessage">An error occurred during the transaction.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="closeError">
+            <i class="fa-solid fa-xmark"></i> Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/booking.js"></script>
+  </body>
+</html>
